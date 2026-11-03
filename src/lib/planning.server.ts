@@ -474,7 +474,7 @@ export function copilotReply(
     const buses = ctx.spatial.find((s) => s.layer === "bus_stops");
     return [
       `Road utilization is ${pct(r.road.utilizationAfter)} (${RISK_LABELS[r.road.risk]} risk) in ${ctx.zoneName}: ${fmt(r.tripsAfter)} trips/day against ${fmt(r.road.capacityAfter)} trips/day of capacity.`,
-      `${fmt(r.additionalTrips)} additional trips/day come from ${fmt(r.newPopulation)} new residents/workers at ${ASSUMPTIONS.tripRatePerPersonDay[r.road ? (ctx as { input?: { developmentType?: DevelopmentType } }).input?.developmentType ?? "residential" : "residential"]} trips/person-day.`,
+      `${fmt(r.additionalTrips)} additional trips/day come from ${fmt(r.newPopulation)} new residents/workers at ${ASSUMPTIONS.tripRatePerPersonDay[ctx.developmentType]} trips/person-day.`,
       roads ? `Mapped context: ${roads.count} road feature(s) and ${buses?.count ?? 0} transit stop(s) within the search radius.` : "",
       r.road.utilizationAfter > 100
         ? "Utilization exceeds 100%, meaning estimated demand is above capacity under the prototype assumptions. A road expansion (+20%) or public-transport measure (−25% trips) would reduce it."
