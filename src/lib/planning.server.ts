@@ -267,8 +267,8 @@ export function analyzeSpatial(
       label,
       status: "ready" as const,
       count: within.length,
-      nearestM: within.length > 0 ? within[0].d : null,
-      nearestName: within.length > 0 ? within[0].name : null,
+      nearestM: within.length > 0 ? within[0]?.d ?? null,
+      nearestName: within.length > 0 ? within[0]?.name ?? null,
     };
   });
 }
@@ -454,6 +454,7 @@ export function copilotReply(
   question: string,
   ctx: {
     zoneName: string;
+    developmentType: DevelopmentType;
     result: SimulationResult;
     spatial: SpatialFinding[];
     evidence: EvidencePassage[];
@@ -499,7 +500,7 @@ export function copilotReply(
       { name: "Water", m: r.water },
       { name: "Electricity", m: r.electricity },
     ].sort((a, b) => b.m.utilizationAfter - a.m.utilizationAfter);
-    return `The most constrained system is ${domains[0].name} at ${pct(domains[0].m.utilizationAfter)} utilization (${RISK_LABELS[domains[0].m.risk]}). Then ${domains[1].name} at ${pct(domains[1].m.utilizationAfter)} and ${domains[2].name} at ${pct(domains[2].m.utilizationAfter)}. Overall risk is ${RISK_LABELS[r.overallRisk]} — the highest of the three.`;
+    return `The most constrained system is ${domains[0]!.name} at ${pct(domains[0]!.m.utilizationAfter)} utilization (${RISK_LABELS[domains[0]!.m.risk]}). Then ${domains[1]!.name} at ${pct(domains[1]!.m.utilizationAfter)} and ${domains[2]!.name} at ${pct(domains[2]!.m.utilizationAfter)}. Overall risk is ${RISK_LABELS[r.overallRisk]} — the highest of the three.`;
   }
 
   if (has("mitigat", "option", "reduce", "lower")) {
@@ -520,7 +521,7 @@ export function copilotReply(
 
   if (has("evidence", "regulation", "far", "law", "policy", "rule")) {
     return ctx.evidence.length > 0
-      ? `Retrieved planning evidence (${ctx.evidence.length} passage(s)):\n${ctx.evidence.map((e) => `• [${e.documentTitle}] ${e.content}`).join("\n")}\nCaution: ${ctx.evidence[0].caution}`
+      ? `Retrieved planning evidence (${ctx.evidence.length} passage(s)):\n${ctx.evidence.map((e) => `• [${e.documentTitle}] ${e.content}`).join("\n")}\nCaution: ${ctx.evidence[0]?.caution ?? "Verify against the original document."}`
       : "No planning-document passages matched this question in the local retrieval index. Try terms like FAR, setbacks, parking, road width or TOD.";
   }
 
@@ -556,8 +557,8 @@ export function parseScenarioText(text: string): ParsedScenario {
   let units: number | null = null;
   const unitsMatch = t.match(/([\d,]+(?:\.\d+)?)\s*(thousand|k)?\s*(?:-|–)?\s*(?:residential\s+|commercial\s+|industrial\s+|mixed\s+)?units?\b/);
   if (unitsMatch) {
-    let n = parseFloat(unitsMatch[1].replace(/,/g, ""));
-    if (unitsMatch[2] === "thousand" || unitsMatch[2] === "k") n *= 1000;
+    let n = parseFloat(unitsMatch[1]!.replace(/,/g, ""));
+    if (unitsMatch[2]! === "thousand" || unitsMatch[2] === "k") n *= 1000;
     units = Math.round(n);
   } else {
     const bare = t.match(/(\d[\d,]{2,})/);
@@ -592,8 +593,8 @@ export function parseScenarioText(text: string): ParsedScenario {
   let radiusM: number | null = null;
   const radiusMatch = t.match(/within\s+([\d,]+(?:\.\d+)?)\s*(km|kilometers?|kilometres?|m|meters?|metres?)?/);
   if (radiusMatch) {
-    let n = parseFloat(radiusMatch[1].replace(/,/g, ""));
-    if (radiusMatch[2] && radiusMatch[2].startsWith("k")) n *= 1000;
+    let n = parseFloat(radiusMatch[1]!.replace(/,/g, ""));
+    if (radiusMatch[2]! && radiusMatch[2]!.startsWith("k")) n *= 1000;
     radiusM = Math.round(n);
   }
 
@@ -617,7 +618,7 @@ export function parseScenarioText(text: string): ParsedScenario {
   if (!zoneId) {
     const locMatch = text.match(/\b(?:at|in|near|around)\s+([A-Za-z0-9'’.\- ]+?)(?=\s*,\s*|\s+within\b|\s+with\b|[.,;]|$)/i);
     if (locMatch) {
-      const phrase = locMatch[1].trim().replace(/^(a|an|the)\s+/i, "");
+      const phrase = locMatch[1]!.trim().replace(/^(a|an|the)\s+/i, "");
       // Strip a trailing development phrase like "500-unit residential development"
       const cleaned = phrase
         .replace(/[\d,]+\s*-?\s*units?\s*/i, "")
