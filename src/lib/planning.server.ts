@@ -267,8 +267,8 @@ export function analyzeSpatial(
       label,
       status: "ready" as const,
       count: within.length,
-      nearestM: within.length > 0 ? (within[0]?.d ?? null),
-      nearestName: within.length > 0 ? (within[0]?.name ?? null),
+      nearestM: within.length > 0 ? (within[0]?.d ?? null) : null,
+      nearestName: within.length > 0 ? (within[0]?.name ?? null) : null,
     };
   });
 }
