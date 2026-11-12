@@ -556,9 +556,10 @@ export function parseScenarioText(text: string): ParsedScenario {
 
   let units: number | null = null;
   const unitsMatch = t.match(/([\d,]+(?:\.\d+)?)\s*(thousand|k)?\s*(?:-|–)?\s*(?:residential\s+|commercial\s+|industrial\s+|mixed\s+)?units?\b/);
-  if (unitsMatch) {
-    let n = parseFloat(unitsMatch[1]!.replace(/,/g, ""));
-    if (unitsMatch[2]! === "thousand" || unitsMatch[2] === "k") n *= 1000;
+  const unitText = unitsMatch?.[1];
+  if (unitsMatch && unitText) {
+    let n = parseFloat(unitText.replace(/,/g, ""));
+    if (unitsMatch[2] === "thousand" || unitsMatch[2] === "k") n *= 1000;
     units = Math.round(n);
   } else {
     const bare = t.match(/(\d[\d,]{2,})/);
@@ -592,9 +593,10 @@ export function parseScenarioText(text: string): ParsedScenario {
 
   let radiusM: number | null = null;
   const radiusMatch = t.match(/within\s+([\d,]+(?:\.\d+)?)\s*(km|kilometers?|kilometres?|m|meters?|metres?)?/);
-  if (radiusMatch) {
-    let n = parseFloat(radiusMatch[1]!.replace(/,/g, ""));
-    if (radiusMatch[2]! && radiusMatch[2]!.startsWith("k")) n *= 1000;
+  const radiusText = radiusMatch?.[1];
+  if (radiusMatch && radiusText) {
+    let n = parseFloat(radiusText.replace(/,/g, ""));
+    if (radiusMatch[2]?.startsWith("k")) n *= 1000;
     radiusM = Math.round(n);
   }
 
@@ -618,7 +620,7 @@ export function parseScenarioText(text: string): ParsedScenario {
   if (!zoneId) {
     const locMatch = text.match(/\b(?:at|in|near|around)\s+([A-Za-z0-9'’.\- ]+?)(?=\s*,\s*|\s+within\b|\s+with\b|[.,;]|$)/i);
     if (locMatch) {
-      const phrase = locMatch[1]!.trim().replace(/^(a|an|the)\s+/i, "");
+      const phrase = locMatch[1]?.trim().replace(/^(a|an|the)\s+/i, "") ?? "";
       // Strip a trailing development phrase like "500-unit residential development"
       const cleaned = phrase
         .replace(/[\d,]+\s*-?\s*units?\s*/i, "")

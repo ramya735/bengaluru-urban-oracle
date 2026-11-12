@@ -77,10 +77,10 @@ function num(v: unknown): number {
   return Number.isFinite(p) ? p : 0;
 }
 
-function toZone(row: Record<string, unknown>): ZoneLike {
+function toZone(row: Partial<ZoneLike>): ZoneLike {
   return {
-    id: String(row.id),
-    name: String(row.name),
+    id: String(row.id ?? ""),
+    name: String(row.name ?? ""),
     area_km2: num(row.area_km2),
     population: num(row.population),
     road_capacity: num(row.road_capacity),
@@ -89,10 +89,10 @@ function toZone(row: Record<string, unknown>): ZoneLike {
     water_demand: num(row.water_demand),
     electricity_capacity: num(row.electricity_capacity),
     electricity_demand: num(row.electricity_demand),
-    land_use: String(row.land_use),
+    land_use: String(row.land_use ?? ""),
     lat: num(row.lat),
     lng: num(row.lng),
-    color: String(row.color),
+    color: String(row.color ?? ""),
   };
 }
 
@@ -101,7 +101,7 @@ export const getZones = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase.from("zones").select("*");
     if (error) throw new Error(error.message);
-    return (data ?? []).map((row) => toZone(row as Record<string, unknown>));
+    return (data ?? []).map((row) => toZone(row));
   });
 
 export const getDatasetRegistry = createServerFn({ method: "GET" })
@@ -158,7 +158,16 @@ export const runScenarioAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => scenarioInputSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ scenarioId: string; analysis: AnalysisResult; zone: ZoneLike }> => {
-    const input = data as ScenarioInput;
+    const input: ScenarioInput = {
+      ...data,
+      zoneId: data.zoneId || null,
+      locationLabel: data.locationLabel ?? null,
+      lat: data.lat ?? null,
+      lng: data.lng ?? null,
+      description: data.description ?? null,
+    };
+
+    if (!input.zoneId) throw new Error("Choose a Bengaluru zone before running the analysis.");
 
     const { data: zoneRow, error: zoneError } = await context.supabase
       .from("zones")
@@ -166,7 +175,7 @@ export const runScenarioAnalysis = createServerFn({ method: "POST" })
       .eq("id", input.zoneId)
       .single();
     if (zoneError || !zoneRow) throw new Error("Zone not found");
-    const zone = toZone(zoneRow as Record<string, unknown>);
+    const zone = toZone(zoneRow);
 
     const center = { lat: input.lat ?? zone.lat, lng: input.lng ?? zone.lng };
 
@@ -230,10 +239,10 @@ export const runScenarioAnalysis = createServerFn({ method: "POST" })
       scenario_id: scenario.id,
       user_id: context.userId,
       result: analysis as unknown as Database["public"]["Tables"]["simulation_results"]["Insert"]["result"],
-      spatial_context: spatial,
-      evidence,
-      impact_interpretation: analysis.impacts,
-      design_options: analysis.designOptions,
+      spatial_context: spatial as unknown as Database["public"]["Tables"]["simulation_results"]["Insert"]["spatial_context"],
+      evidence: evidence as unknown as Database["public"]["Tables"]["simulation_results"]["Insert"]["evidence"],
+      impact_interpretation: analysis.impacts as unknown as Database["public"]["Tables"]["simulation_results"]["Insert"]["impact_interpretation"],
+      design_options: analysis.designOptions as unknown as Database["public"]["Tables"]["simulation_results"]["Insert"]["design_options"],
     });
 
     await context.supabase.from("audit_logs").insert([

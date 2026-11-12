@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep the dashboard at `/` and use separate file-based routes for planning, scenario comparison, the city map, and reports so each screen has a direct URL and its own metadata.
